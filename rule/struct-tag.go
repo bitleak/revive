@@ -14,14 +14,20 @@ import (
 type StructTagRule struct{}
 
 // Apply applies the rule to given file.
-func (*StructTagRule) Apply(file *lint.File, _ lint.Arguments) []lint.Failure {
+func (*StructTagRule) Apply(file *lint.File, args lint.Arguments) []lint.Failure {
 	var failures []lint.Failure
 
+	requireCamelCase := false
+	if len(args) > 0 {
+		if jsonNameStyle, ok := args[0].(string); ok && strings.ToLower(jsonNameStyle) == "camelcase" {
+			requireCamelCase = true
+		}
+	}
 	onFailure := func(failure lint.Failure) {
 		failures = append(failures, failure)
 	}
 
-	w := lintStructTagRule{onFailure: onFailure}
+	w := lintStructTagRule{onFailure: onFailure, requireCamelCase: requireCamelCase}
 
 	ast.Walk(w, file.AST)
 
@@ -34,8 +40,9 @@ func (*StructTagRule) Name() string {
 }
 
 type lintStructTagRule struct {
-	onFailure  func(lint.Failure)
-	usedTagNbr map[string]bool // list of used tag numbers
+	onFailure        func(lint.Failure)
+	usedTagNbr       map[string]bool // list of used tag numbers
+	requireCamelCase bool
 }
 
 func (w lintStructTagRule) Visit(node ast.Node) ast.Visitor {
@@ -160,7 +167,20 @@ func (lintStructTagRule) checkBSONTag(options []string) (string, bool) {
 	return "", true
 }
 
-func (lintStructTagRule) checkJSONTag(name string, options []string) (string, bool) {
+func (lintStructTagRule) checkTagName(name string, requireCamelCase bool) (string, bool) {
+	if requireCamelCase {
+		if !isCamelCase(name) {
+			return fmt.Sprintf("JSON tag name '%s' MUST be camel case", name), false
+		}
+	} else {
+		if !isSnakeCase(name) {
+			return fmt.Sprintf("JSON tag name '%s' MUST be snake case", name), false
+		}
+	}
+	return "", true
+}
+
+func (w lintStructTagRule) checkJSONTag(name string, options []string) (string, bool) {
 	for _, opt := range options {
 		switch opt {
 		case "omitempty", "string":
@@ -174,7 +194,7 @@ func (lintStructTagRule) checkJSONTag(name string, options []string) (string, bo
 		}
 	}
 
-	return "", true
+	return w.checkTagName(name, w.requireCamelCase)
 }
 
 func (lintStructTagRule) checkXMLTag(options []string) (string, bool) {

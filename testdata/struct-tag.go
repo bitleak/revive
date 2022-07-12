@@ -14,6 +14,7 @@ type decodeAndValidateRequest struct {
 	DefaultBool3     bool            `json:"defaultBool" default:"false"`
 	DefaultFloat     float64         `json:"defaultFloat" default:"f10.0"` // MATCH /field's type and default value's type mismatch/
 	DefaultFloat2    float64         `json:"defaultFloat" default:"10.0"`
+	DefaultFloat3    float64         `json:"default_float" default:"10.0"`     // MATCH /JSON tag name 'default_float' MUST be camel case/
 	MandatoryStruct  mandatoryStruct `json:"mandatoryStruct" required:"trues"` // MATCH /required should be 'true' or 'false'/
 	MandatoryStruct2 mandatoryStruct `json:"mandatoryStruct" required:"true"`
 	MandatoryStruct4 mandatoryStruct `json:"mandatoryStruct" required:"false"`
@@ -21,8 +22,8 @@ type decodeAndValidateRequest struct {
 	OptionalQuery    string          `json:"-" querystring:"queryfoo"`
 	optionalQuery    string          `json:"-" querystring:"queryfoo"` // MATCH /tag on not-exported field optionalQuery/
 	// No-reg test for bug https://github.com/mgechev/revive/issues/208
-	Tiret			 string          `json:"-,"`
-	BadTiret         string          `json:"other,"` // MATCH /option can not be empty in JSON tag/
+	Tiret    string `json:"-,"`
+	BadTiret string `json:"other,"` // MATCH /option can not be empty in JSON tag/
 }
 
 type RangeAllocation struct {

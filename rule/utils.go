@@ -171,3 +171,18 @@ func checkNumberOfArguments(expected int, args lint.Arguments, ruleName string) 
 		panic(fmt.Sprintf("not enough arguments for %s rule, expected %d, got %d. Please check the rule's documentation", ruleName, expected, len(args)))
 	}
 }
+
+// isSnakeCase return a string is snake case or not
+func isSnakeCase(name string) bool {
+	for _, c := range name {
+		if c >= 'A' && c <= 'Z' {
+			return false
+		}
+	}
+	return true
+}
+
+// isCamelCase return a string is camel case or not
+func isCamelCase(name string) bool {
+	return strings.IndexByte(name, '_') == -1
+}
